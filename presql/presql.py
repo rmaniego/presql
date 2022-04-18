@@ -63,7 +63,7 @@ class PreSQL():
         conditions = ""
         if not isinstance(where, str) or where is None:
             conditions = f"WHERE {where}"
-        rows = self.execute(f"SELECT COUNT(col) FROM {table} {conditions};")
+        rows = self.execute(f"SELECT COUNT({column}) FROM {table} {conditions};")
         if rows is not None:
             for row in rows.fetchone():
                 return int(row["usage"])
