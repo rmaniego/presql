@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: presql
-Version: 1.0.0
+Version: 1.0.1
 Summary: PostgreSQL and Psycopg2 wrapper.
 Home-page: https://github.com/rmaniego/presql
 Author: Rodney Maniego Jr.

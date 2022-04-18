@@ -167,7 +167,7 @@ class PreSQL():
             print("PreSQL Warning: Columns only allow string, list, or dictionary objects only.")
             return
         fconditions = ""
-        if not isinstance(where, str) or where is None:
+        if isinstance(where, str):
             fconditions = f"WHERE {where}"
         self.execute(_cleaner(f"UPDATE {table} SET {fdata} {fconditions}"))
         

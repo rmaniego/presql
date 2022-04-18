@@ -88,8 +88,11 @@ class PreSQL():
         fconditions = f"WHERE {where}"
         if not isinstance(where, str):
             fconditions = ""
-        row = self.execute(_cleaner(f"SELECT COUNT(*) FROM {table} {fconditions}")).fetchone()
-        return int(row["count"])
+        cursor = self.execute(_cleaner(f"SELECT COUNT(*) FROM {table} {fconditions}"))
+        if cursor is not None:
+            row = cursor.fetchone()
+            return int(row["count"])
+        return 0
     
     def select(self,
              table,
@@ -124,7 +127,10 @@ class PreSQL():
             query += f" LIMIT {limit}"
         if isinstance(offset, int):
             query += f" OFFSET {offset}"
-        return self.execute(query).fetchall()
+        cursor = self.execute(query)
+        if cursor is not None:
+            return cursor.fetchall()
+        return []
         
     def insert(self, table, columns, values):
         """ Insert new table data. """
