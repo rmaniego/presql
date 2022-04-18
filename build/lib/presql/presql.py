@@ -63,7 +63,7 @@ class PreSQL():
         conditions = ""
         if not isinstance(where, str) or where is None:
             conditions = f"WHERE {where}"
-        rows = self.execute(f"SELECT COUNT(col) FROM table {conditions};")
+        rows = self.execute(f"SELECT COUNT(col) FROM {table} {conditions};")
         if rows is not None:
             for row in rows.fetchone():
                 return int(row["usage"])
@@ -104,6 +104,52 @@ class PreSQL():
         if rows is not None:
             return rows.fetchall()
         return ()
+        
+    def insert(self, table, columns, values):
+        """ Insert new table data. """
+        if isinstance(columns, (list, set)):
+            columns = ",".join(list(columns))
+        if not isinstance(columns, str):
+            print("PreSQL Warning: Columns only allow string or list objects only.")
+            return
+        data = []
+        if isinstance(values, (list, set)):
+            for value in values:
+                data.append("(" + ",".join(list(columns) + ")")
+        if not isinstance(columns, str):
+            print("PreSQL Warning: Values only allow string or list objects only.")
+            return
+        fdata = values
+        if len(data):
+            fdata = ", ".join(values)
+        self.execute(f"INSERT INTO {table} ({columns}) VALUES {fdata};")
+        
+    def update(self, table, columns, where=None):
+        """ Insert new table data. """
+        if isinstance(columns, (list, set)):
+            columns = ",".join(list(columns))
+        if not isinstance(columns, str):
+            print("PreSQL Warning: Columns only allow string or list objects only.")
+            return
+        fdata = ""
+        fcolumns = []
+        if isinstance(columns, dict):
+            for key, value in columns.items():
+                fcolumns.append(f"{key}={value}")
+            if len(fcolumns):
+                fdata = ",".join(fcolumns)
+        elif isinstance(columns, (list, set)):
+            fcolumn = list(columns)
+        elif isinstance(columns, str):
+            fdata = columns
+        if len(fcolumns) or len(fdata):
+            fdata = ",".join(fcolumns)
+            print("PreSQL Warning: Columns only allow string, list, or dictionary objects only.")
+            return
+        fconditions = ""
+        if not isinstance(where, str) or where is None:
+            fconditions = f"WHERE {where}"
+        self.execute(f"UPDATE {table} SET {fcolumns} {fcondition};")
 
     def __exit__(self, type, value, traceback):
         if self.cursor is not None:

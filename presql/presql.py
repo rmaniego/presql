@@ -115,7 +115,7 @@ class PreSQL():
         data = []
         if isinstance(values, (list, set)):
             for value in values:
-                data.append("(" + ",".join(list(columns) + ")")
+                data.append("(" + ",".join(list(columns)) + ")")
         if not isinstance(columns, str):
             print("PreSQL Warning: Values only allow string or list objects only.")
             return
