@@ -4,86 +4,92 @@
 """
 
 import psycopg2
-
+import psycopg2.extras
 
 class PreSQL():
-    def __init__(self, uri=None, dbname=None, user=None, password=None, host=None, port=None, sslmode=None):
-        # https://www.psycopg.org/docs/connection.html
-        self.uri = uri
-        self.dbname = dbname
-        self.dbname = dbname
-        self.user = user
-        self.password = password
-        self.host = host
-        self.port = port
-        self.connection = None
-        self.cursor = None
+    def __init__(self, uri=None, dbname=None, user=None, password=None, host=None, port=None, sslmode=None, autocommit=True):
+        self._uri = uri
+        self._dbname = dbname
+        self._dbname = dbname
+        self._user = user
+        self._password = password
+        self._host = host
+        self._port = port
+        self._sslmode = sslmode
+        self._autocommit = autocommit
+        self._connection = None
+        self._cursor = None
  
     def __enter__(self):
-        if not isinstance(self.uri, str):
-            if not (isinstance(self.dbname, str) and isinstance(self.user, str) and isinstance(self.password, str)):
+        if not isinstance(self._uri, str):
+            if not (isinstance(self._dbname, str) and isinstance(self._user, str) and isinstance(self._password, str)):
                 assert False, "Database parameters must be in string format."
                 return
         try:
-            if isinstance(self.uri, str):
-                if not isinstance(self.sslmode, str):
-                    self.connection = psycopg2.connect(self.uri)
+            if isinstance(self._uri, str):
+                if not isinstance(self._sslmode, str):
+                    self._connection = psycopg2.connect(self._uri)
                 else:
-                    self.connection = psycopg2.connect(self.uri, sslmode=self.sslmode)
-            elif isinstance(self.host, str) and isinstance(self.port, str):
-                self.connection = psycopg2.connect(dbname=self.dbname,
-                                                    user=self.user,
-                                                    password=self.password,
-                                                    host=self.host,
-                                                    port=self.port)
+                   self._connection = psycopg2.connect(self._uri, sslmode=self._sslmode)
+            elif isinstance(self._host, str) and isinstance(self._port, str):
+                self._connection = psycopg2.connect(dbname=self._dbname,
+                                                    user=self._user,
+                                                    password=self._password,
+                                                    host=self._host,
+                                                    port=self._port)
             else:
-                self.connection = psycopg2.connect(dbname=self.dbname,
-                                                user=self.user,
-                                                password=self.password)
-            if self.connection is not None:
-                self.cursor = self.connection.cursor()
+                self._connection = psycopg2.connect(dbname=self._dbname,
+                                                user=self._user,
+                                                password=self._password)
+            if self._connection is not None:
+                self._cursor = self._connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         except:
             pass
         return self
     
     def set_client_encoding(self, encoding):
-        if self.connection is not None:
-            self.connection.set_client_encoding(encoding)
+        if self._connection is not None:
+            self._connection.set_client_encoding(encoding)
     
     def connected(self):
-        return (self.connection is not None)
+        return (self._connection is not None)
         
     def execute(self, query, values=None):
-        result = None
-        if None not in (self.connection, self.cursor):
+        if self._cursor is not None:
             if isinstance(query, str):
-                if isinstance(values, (list, set, tuple)):
-                    result = self.cursor.execute(query, values)
-                else:
-                    result = self.cursor.execute(query)
-            self.connection.commit()
-        return result
+                try:
+                    if isinstance(values, (list, set, tuple)):
+                        self._cursor.execute(query, values)
+                    else:
+                        self._cursor.execute(query)
+                    if isinstance(self._autocommit, bool) and bool(self._autocommit):
+                        self._connection.commit()
+                except:
+                    self.rollback()
+            return self._cursor
         
     def mogrify(self, query, values):
-        result = None
-        if None not in (self.connection, self.cursor):
+        if self._cursor is not None:
             if isinstance(query, str) and isinstance(values, (list, set, tuple)):
-                result = self.cursor.mogrify(query, values)
-                self.connection.commit()
-        return result
+                try:
+                    self._cursor.mogrify(query, values)
+                    if isinstance(self._autocommit, bool) and bool(self._autocommit):
+                        self._connection.commit()
+                except:
+                    self.rollback()
+            return self._cursor
         
-    def count(self, table, column=None, where=None):
+    def rollback(self):
+        if self._cursor is not None:
+            self._connection.rollback()
+        
+    def count(self, table, where=None):
         """ Get count of column based on the condition. """
-        if not isinstance(column, str) or column is None:
-            column = "*"
-        conditions = ""
-        if not isinstance(where, str) or where is None:
-            conditions = f"WHERE {where}"
-        rows = self.execute(f"SELECT COUNT({column}) FROM {table} {conditions};")
-        if rows is not None:
-            for row in rows.fetchone():
-                return int(row["COUNT"])
-        return 0
+        fconditions = f"WHERE {where}"
+        if not isinstance(where, str):
+            fconditions = ""
+        row = self.execute(_cleaner(f"SELECT COUNT(*) FROM {table} {fconditions}")).fetchone()
+        return int(row["count"])
     
     def select(self,
              table,
@@ -97,9 +103,11 @@ class PreSQL():
              limit=None,
              offset=None):
         """ Formats SQL commands and returns appropriate iterable. """
-        query = "SELECT *"
+        query = "SELECT"
         if isinstance(columns, str):
-            query.replace("*", columns)
+            query += f" {columns}"
+        else:
+            query += " *"
         if isinstance(table, str):
             query += f" FROM {table}"
         if isinstance(join, str) and isinstance(join_table, str):
@@ -116,10 +124,7 @@ class PreSQL():
             query += f" LIMIT {limit}"
         if isinstance(offset, int):
             query += f" OFFSET {offset}"
-        rows = self.execute(query+";")
-        if rows is not None:
-            return rows.fetchall()
-        return ()
+        return self.execute(query).fetchall()
         
     def insert(self, table, columns, values):
         """ Insert new table data. """
@@ -138,7 +143,7 @@ class PreSQL():
         fdata = values
         if len(data):
             fdata = ", ".join(values)
-        self.execute(f"INSERT INTO {table} ({columns}) VALUES {fdata};")
+        self.execute(_cleaner(f"INSERT INTO {table} ({columns}) VALUES {fdata}"))
         
     def update(self, table, columns, where=None):
         """ Insert new table data. """
@@ -148,27 +153,36 @@ class PreSQL():
             print("PreSQL Warning: Columns only allow string or list objects only.")
             return
         fdata = ""
-        fcolumns = []
         if isinstance(columns, dict):
+            fcolumns = []
             for key, value in columns.items():
                 fcolumns.append(f"{key}={value}")
             if len(fcolumns):
                 fdata = ",".join(fcolumns)
         elif isinstance(columns, (list, set)):
-            fcolumn = list(columns)
+            fdata = ",".join(list(columns))
         elif isinstance(columns, str):
             fdata = columns
-        if len(fcolumns) or len(fdata):
-            fdata = ",".join(fcolumns)
+        if not len(fdata):
             print("PreSQL Warning: Columns only allow string, list, or dictionary objects only.")
             return
         fconditions = ""
         if not isinstance(where, str) or where is None:
             fconditions = f"WHERE {where}"
-        self.execute(f"UPDATE {table} SET {fcolumns} {fcondition};")
+        self.execute(_cleaner(f"UPDATE {table} SET {fdata} {fconditions}"))
+        
+    def delete(self, table, where=None):
+        """ Get count of column based on the condition. """
+        fconditions = f"WHERE {where}"
+        if not isinstance(where, str):
+            fconditions = ""
+        self.execute(_cleaner(f"DELETE FROM {table} {fconditions}"))
 
     def __exit__(self, type, value, traceback):
-        if self.cursor is not None:
-            self.cursor.close()
-        if self.connection is not None:
-            self.connection.close()
+        if self._cursor is not None:
+            self._cursor.close()
+        if self._connection is not None:
+            self._connection.close()
+
+def _cleaner(query):
+    return query.strip().replace("  ", " ").replace(";", "") + ";"

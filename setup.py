@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 setuptools.setup(
     name = "presql",
     packages = ["presql"],
-    version = "0.9.12",
+    version = "1.0.0",
     license="MIT",
     description = "PostgreSQL and Psycopg2 wrapper.",
     long_description=long_description,
@@ -16,7 +16,7 @@ setuptools.setup(
     url = "https://github.com/rmaniego/presql",
     download_url = "https://github.com/rmaniego/presql/archive/v1.0.tar.gz",
     keywords = ["postgresql", "postgres", "psycopg2", "sql", "python"],
-    install_requires=["psycopg2-binary"],
+    install_requires=["psycopg2", "psycopg2-binary"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers", 
