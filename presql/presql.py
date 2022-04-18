@@ -1,19 +1,9 @@
 """
-    (c) 2020 Rodney Maniego Jr.
+    (c) 2022 Rodney Maniego Jr.
     Arkivist
 """
 
-import json
-import time
-import requests
-import threading
-from random import randint
-from cryptography.fernet import Fernet
-
-import csv
 import psycopg2
-from maguro import Maguro
-from arkivist import Arkivist
 
 
 class PreSQL():
