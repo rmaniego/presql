@@ -7,8 +7,9 @@ import psycopg2
 
 
 class PreSQL():
-    def __init__(self, dsn=None, dbname=None, user=None, password=None, host=None, port=None, sslmode=None):
-        self.dsn = dsn
+    def __init__(self, uri=None, dbname=None, user=None, password=None, host=None, port=None, sslmode=None):
+        # https://www.psycopg.org/docs/connection.html
+        self.uri = uri
         self.dbname = dbname
         self.dbname = dbname
         self.user = user
@@ -19,16 +20,16 @@ class PreSQL():
         self.cursor = None
  
     def __enter__(self):
-        if not isinstance(self.dsn, str):
+        if not isinstance(self.uri, str):
             if not (isinstance(self.dbname, str) and isinstance(self.user, str) and isinstance(self.password, str)):
                 assert False, "Database parameters must be in string format."
                 return
         try:
-            if isinstance(self.dsn, str):
+            if isinstance(self.uri, str):
                 if not isinstance(self.sslmode, str):
-                    self.connection = psycopg2.connect(self.dsn)
+                    self.connection = psycopg2.connect(self.uri)
                 else:
-                    self.connection = psycopg2.connect(self.dsn, sslmode=self.sslmode)
+                    self.connection = psycopg2.connect(self.uri, sslmode=self.sslmode)
             elif isinstance(self.host, str) and isinstance(self.port, str):
                 self.connection = psycopg2.connect(dbname=self.dbname,
                                                     user=self.user,
