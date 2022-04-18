@@ -45,12 +45,14 @@ class PreSQL():
                 else:
                     self.cursor.execute(query)
             self.connection.commit()
+        return self.cursor()
         
     def mogrify(self, query, values):
         if None not in (self.connection, self.cursor):
             if isinstance(query, str) and isinstance(values, (list, set, tuple)):
                 self.cursor.mogrify(query, values)
                 self.connection.commit()
+        return self.cursor()
 
     def __exit__(self, type, value, traceback):
         if self.cursor is not None:
