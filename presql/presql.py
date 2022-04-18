@@ -19,23 +19,29 @@ class PreSQL():
     def __enter__(self):
         if not isinstance(self.dbname, str) and isinstance(self.user, str) and isinstance(self.password, str):
             assert False, "Database parameters mus be in string format."
-        if isinstance(self.host, str) and isinstance(self.port, str):
-            self.connection = psycopg2.connect(dbname=self.dbname,
-                                               user=self.user,
-                                               password=self.password,
-                                               host=self.host,
-                                               port=self.port)
-        else:
-            self.connection = psycopg2.connect(dbname=self.dbname,
-                                               user=self.user,
-                                               password=self.password)
-        if self.connection is not None:
-            self.cursor = self.connection.cursor()
+        try:
+            if isinstance(self.host, str) and isinstance(self.port, str):
+                self.connection = psycopg2.connect(dbname=self.dbname,
+                                                   user=self.user,
+                                                   password=self.password,
+                                                   host=self.host,
+                                                   port=self.port)
+            else:
+                self.connection = psycopg2.connect(dbname=self.dbname,
+                                                   user=self.user,
+                                                   password=self.password)
+            if self.connection is not None:
+                self.cursor = self.connection.cursor()
+        except:
+            pass
         return self
     
     def set_client_encoding(self, encoding):
         if self.connection is not None:
             self.connection.set_client_encoding(encoding)
+    
+    def connected(self):
+        return (self.connection is not None)
         
     def execute(self, query, values=None):
         result = None
