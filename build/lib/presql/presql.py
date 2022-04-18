@@ -38,21 +38,23 @@ class PreSQL():
             self.connection.set_client_encoding(encoding)
         
     def execute(self, query, values=None):
+        result = None
         if None not in (self.connection, self.cursor):
             if isinstance(query, str):
                 if isinstance(values, (list, set, tuple)):
-                    self.cursor.execute(query, values)
+                    result = self.cursor.execute(query, values)
                 else:
-                    self.cursor.execute(query)
+                    result = self.cursor.execute(query)
             self.connection.commit()
-        return self.cursor()
+        return result
         
     def mogrify(self, query, values):
+        result = None
         if None not in (self.connection, self.cursor):
             if isinstance(query, str) and isinstance(values, (list, set, tuple)):
-                self.cursor.mogrify(query, values)
+                result = self.cursor.mogrify(query, values)
                 self.connection.commit()
-        return self.cursor()
+        return result
 
     def __exit__(self, type, value, traceback):
         if self.cursor is not None:
