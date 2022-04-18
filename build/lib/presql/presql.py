@@ -17,7 +17,7 @@ class PreSQL():
         self.cursor = None
  
     def __enter__(self):
-        if not isinstance(dbname, str) and isinstance(user, str) and isinstance(password, str):
+        if not isinstance(self.dbname, str) and isinstance(self.user, str) and isinstance(self.password, str):
             assert False, "Database parameters mus be in string format."
         if not isinstance(self.host, str) and isinstance(self.port, str):
             self.connection = psycopg2.connect(dbname=self.dbname,

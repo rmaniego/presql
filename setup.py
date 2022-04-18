@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 setuptools.setup(
     name = "presql",
     packages = ["presql"],
-    version = "0.9.2",
+    version = "0.9.3",
     license="MIT",
     description = "PostgreSQL and Psycopg2 wrapper.",
     long_description=long_description,
